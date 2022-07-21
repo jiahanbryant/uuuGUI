@@ -2,7 +2,7 @@ import subprocess
 import os, sys
 import platform
 
-# From StackOverFlow
+# From StackOverFlow, mainly for Windows
 # https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
 def resource_path(relative_path):
     """ Get the absolute path to the resource, works for dev and for PyInstaller """
@@ -13,6 +13,16 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
 
     return os.path.join(base_path, relative_path)
+
+# To extract device info from output of usb_check
+def retrieveDEVICE(): 
+    contentList = []
+    usbDevice = usb_check()
+    while (usbDevice != "False"):
+        contentList = usbDevice.split()
+        print(len(contentList))
+        break
+    print("Error: USB device not found.")
 
 def usb_check():
     uuu_WIN = resource_path("tools\win")
@@ -26,21 +36,17 @@ def usb_check():
             os.chdir(uuu_WIN)
             command = subprocess.run(["uuu.exe", "-lsusb"], stdout=subprocess.PIPE, universal_newlines=True)
             print(command.stdout)
-            if "MX8MM" in command.stdout:
-                print("MX8MM SoC found.")
-            else:
-                print("No USB device found!")
-            return True
+            return command.stdout
         elif running_OS == "macOS" or running_OS=="Darwin":
             os.chdir(uuu_MAC)
             command = subprocess.run(["./uuu", "-lsusb"], stdout=subprocess.PIPE, universal_newlines=True)
             print(command.stdout)
-            return True
+            return command.stdout
         elif running_OS == "Linux":
             os.chdir(uuu_LINUX)
             command = subprocess.run(["./uuu", "-lsusb"], stdout=subprocess.PIPE, universal_newlines=True)
             print(command.stdout)
-            return True
+            return command.stdout
         else:
             print("Error: Not supported OS")
             return False
@@ -51,7 +57,8 @@ def usb_check():
 
 def main() -> None:
 
-    usb_check()
+    #usb_check()
+    retrieveDEVICE()
     input("\nFor staying only. press ENTER to close.\n")
 
 if __name__ == "__main__":
