@@ -3,6 +3,10 @@ import os, sys
 import platform
 from time import sleep
 
+# command list
+checkForUsb = "check_usb_device"
+loadImage = "boot_image"
+
 # From StackOverFlow, mainly for Windows
 # https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
 def resource_path(relative_path):
@@ -16,11 +20,53 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
+def cmdCheck(cmd):
+    uuu_WIN = resource_path(r"tools\win\uuu.exe")
+    uuu_MAC = resource_path("tools/mac/uuu")
+    uuu_LINUX = resource_path("tools/linux/uuu")
+    autoScript_WIN = resource_path(r"tools\images\uuu.auto")
+    autoScript_Linux_Mac = resource_path("tools/images/uuu.auto")
+
+    try:
+        if running_OS == "Windows":
+            if cmd == "check_usb_device":
+                print("Checking for USB devices...")
+                command = subprocess.run([uuu_WIN, "-lsusb"], stdout=subprocess.PIPE, universal_newlines=True)
+            elif cmd == "boot_image":
+                print("loading images...")
+                command = subprocess.run([uuu_WIN, autoScript_WIN], stdout=subprocess.PIPE, universal_newlines=True)
+            #print(command.stdout)
+            #os.chdir(base_path)
+            return command.stdout
+        elif running_OS == "macOS" or running_OS=="Darwin":
+            if cmd == "check_usb_device":
+                print("Checking for USB devices...")
+                command = subprocess.run([uuu_MAC, "-lsusb"], stdout=subprocess.PIPE, universal_newlines=True)
+            elif cmd == "boot_image":
+                print("loading images...")
+                command = subprocess.run(["sudo", uuu_LINUX, autoScript_Linux_Mac], stdout=subprocess.PIPE, universal_newlines=True)
+            return command.stdout
+        elif running_OS == "Linux":
+            if cmd == "check_usb_device":
+                print("Checking for USB devices...")
+                command = subprocess.run([uuu_LINUX, "-lsusb"], stdout=subprocess.PIPE, universal_newlines=True)
+            elif cmd == "boot_image":
+                print("loading images...")
+                command = subprocess.run(["sudo", uuu_LINUX, autoScript_Linux_Mac], stdout=subprocess.PIPE, universal_newlines=True)
+            return command.stdout
+        else:
+            print("Error: Not supported OS")
+            return False
+        
+    except subprocess.SubprocessError:
+        print("Error in running uuu tool.")
+        return False
+
 # To extract device info from output of usb_check
 # currently only support one usb device at a time
 def retrieveDEVICE(): 
     suportList = ["MX8MM", "MX8MN"]
-    usbDevice = usb_check()
+    usbDevice = cmdCheck(checkForUsb)
     if usbDevice != "False":
         for device in suportList:
             if device in usbDevice:
@@ -30,37 +76,12 @@ def retrieveDEVICE():
         print("Error: no usb device found.")
         return False
 
-def usb_check():
-    uuu_WIN = resource_path("tools\win")
-    uuu_MAC = resource_path("tools/mac")
-    uuu_LINUX = resource_path("tools/linux")
+# To load u-boot and fit to ram of soc via USB
+def factory_boot():
     try:
-        print("Checking for USB devices...")
-        if running_OS == "Windows":
-            os.chdir(uuu_WIN)
-            command = subprocess.run(["uuu.exe", "-lsusb"], stdout=subprocess.PIPE, universal_newlines=True)
-            #print(command.stdout)
-            os.chdir(base_path)
-            return command.stdout
-        elif running_OS == "macOS" or running_OS=="Darwin":
-            os.chdir(uuu_MAC)
-            command = subprocess.run(["./uuu", "-lsusb"], stdout=subprocess.PIPE, universal_newlines=True)
-            print(command.stdout)
-            os.chdir(base_path)
-            return command.stdout
-        elif running_OS == "Linux":
-            os.chdir(uuu_LINUX)
-            command = subprocess.run(["./uuu", "-lsusb"], stdout=subprocess.PIPE, universal_newlines=True)
-            #print(command.stdout)
-            os.chdir(base_path)
-            return command.stdout
-        else:
-            print("Error: Not supported OS")
-            return False
-        
-    except subprocess.SubprocessError:
-        print("Error in running uuu tool.")
-        return False
+        cmdCheck(loadImage)
+    except:
+        print("Error: failed to boot image.")
 
 def main() -> None:
 
@@ -71,7 +92,7 @@ def main() -> None:
 
     while True:
         if retrieveDEVICE():
-            print("now start to program...")
+            factory_boot()
             timeout = 0
             break
         elif timeout <= 9:
