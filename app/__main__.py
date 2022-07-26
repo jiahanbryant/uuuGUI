@@ -94,15 +94,21 @@ def main() -> None:
         if retrieveDEVICE():
             factory_boot()
             timeout = 0
-            break
-        elif timeout <= 9:
+            sleep(1)
+            repeat = input("Load image done. Do you want to repeat?(y/n)\n")
+            if repeat == "y" or repeat == "Y":
+                continue
+            elif repeat == "n" or repeat == "N":
+                print("Windows will close in 2s.")
+                sleep(2)
+                break
+        elif timeout <= 14:
             sleep(1)
             timeout += 1
             continue
         else:
             print("Error: waiting for usb timeout !")
             break
-    input("\nPress ENTER to close this window.\n")
 
 if __name__ == "__main__":
     main()
