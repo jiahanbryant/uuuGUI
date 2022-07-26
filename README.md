@@ -6,3 +6,4 @@ https://github.com/NXPmicro/mfgtools
     - `flash bootf` command to flash u-boot and fit image, these files are embeded in the fit image. 
     - `verify` command to check basic information.
     - `help` command to check supported commands.
+- commands are issued via SoC's debug uart interface.
